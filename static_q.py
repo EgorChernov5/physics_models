@@ -4,10 +4,6 @@ pygame.init()
 
 width, height = 1200, 800
 white = (255, 255, 255)
-osxn = width * 1/4
-osxk = width * 3/4
-osyn = height * 1/6
-osyk = height * 3/4
 
 sc = pygame.display.set_mode((width, height), pygame.RESIZABLE)
 pygame.display.set_caption("Заряд с линиями напряженности")
@@ -15,17 +11,23 @@ pygame.display.set_caption("Заряд с линиями напряженнос�
 clock = pygame.time.Clock()
 FPS = 30
 
+osxn = 0
+osxk = width
+osyn = 0
+osyk = height
+
 # pygame.draw.line(sc, white, (osxn, osyk), (osxk, osyk))
 # pygame.draw.line(sc, white, (osxn, osyn), (osxn, osyk))
+
 '''
 Params:
-q1 - величина заряда;
-x1 - координата x;
-y1 - координата y;
+q1 - величина заряда [нКл = 10^(-9) Кл]
+x1 - координата x [см = 10^(-2)]
+y1 - координата y [см = 10^(-2)]
 '''
 q1 = 1
-x1 = 300
-y1 = 300
+x1 = 3
+y1 = 3
 
 # характеристики передаваемых зарядов
 charges = [[q1, x1, y1]]
@@ -33,7 +35,7 @@ charges = [[q1, x1, y1]]
 
 def draw_q(prob_q: list):
     """
-    Рисует заряды.
+    Рисует заряды
     :param prob_q: charges
     """
     for i in range(len(prob_q)):
@@ -42,17 +44,47 @@ def draw_q(prob_q: list):
             index += 1
             if index > 1:
                 if index == 2:
-                    x = j
+                    x = j * 100
                 else:
-                    y = j
-        pygame.draw.circle(sc, white, (osxn + x, osyk - y), 50)
+                    y = j * 100
+        pygame.draw.circle(sc, white, (x, y), 10)
+
+
+def value_E(prob_q, x, y):
+    """
+    Вычисляет конечные координаты вектора E
+    :param prob_q: список зарядов
+    :param x: начальная координата x
+    :param y: начальная координата y
+    :return: координаты конца вектора в виде списка
+    """
+    for i in prob_q:
+        if x / 100 == i[1] and y / 100 == i[2]:
+            continue
+        q = i[0] * 10 ** (-9)
+        k = 9 * 10 ** 9
+        r = (((i[1] - x / 100) ** 2 + (i[2] - y / 100) ** 2) ** (1 / 2))
+        E = (k * q) / (r ** 2)
+        dx = (x / 100) * E / r
+        dy = (y / 100) * E / r
+        return [dx * 100, dy * 100]
 
 
 def draw_vec(prob_q):
     """
-    Рисует векторы напряженности.
+    Рисует векторы напряженности
     :param prob_q: charges
     """
+    kxv = width / 100
+    kyv = height / 100
+    xv = []
+    yv = []
+    for i in range(1, int(kxv)):
+        xv.append(i * 100)
+    for i in range(1, int(kyv)):
+        yv.append(i * 100)
+
+
     return None
 
 
