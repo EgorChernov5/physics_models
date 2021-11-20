@@ -1,4 +1,5 @@
 import pygame
+import numpy
 
 pygame.init()
 
@@ -30,10 +31,11 @@ x1 = 3
 y1 = 3
 
 # характеристики передаваемых зарядов
-test_charges = [[q1, x1, y1]]
+test_charges = [[q1, x1, y1], [1, 5, 5]]
+radius = 10
 
 
-def draw_q(charges: list):
+def draw_charges(charges: list):
     """
     Рисует заряды
     :param charges: test_charges
@@ -47,7 +49,7 @@ def draw_q(charges: list):
                     x = j * 100
                 else:
                     y = j * 100
-        pygame.draw.circle(sc, white, (x, y), 10)
+        pygame.draw.circle(sc, white, (x, y), radius)
 
 
 def positive_charges(charges: list):
@@ -69,7 +71,20 @@ def draw_start_coordinates(positive_ch):
     :param positive_ch: positive_charges
     :return: charges_w_st_coord
     """
-    return None
+    charge_w_st_coord = []
+    charges_w_st_coord = []
+    for i in positive_ch:
+        a = numpy.pi / 4
+        charge_w_st_coord.append(i[0])
+        while a != 9 * numpy.pi / 4:
+            x = i[1] * 100 + 1 + radius * numpy.cos(a)
+            y = i[2] * 100 + 1 + radius * numpy.sin(a)
+            pygame.draw.circle(sc, white, [x, y], 1)
+            charge_w_st_coord.append([x, y])
+            a += numpy.pi / 4
+        charges_w_st_coord.append(charge_w_st_coord)
+        charge_w_st_coord = []
+    return charges_w_st_coord
 
 
 def draw_lines(ch_w_st_coord):
@@ -113,6 +128,7 @@ def draw_vec(charges):
     kyv = height / 100
     xv = []
     yv = []
+
     for i in range(1, int(kxv)):
         xv.append(i * 100)
     for i in range(1, int(kyv)):
@@ -128,8 +144,8 @@ while True:
         if event.type == pygame.QUIT:
             exit()
 
-        draw_q(test_charges)
-        draw_vec(test_charges)
+        draw_charges(test_charges)
+        draw_start_coordinates(positive_charges(test_charges))
 
         pygame.display.update()
 
