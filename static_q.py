@@ -30,17 +30,17 @@ x1 = 3
 y1 = 3
 
 # характеристики передаваемых зарядов
-charges = [[q1, x1, y1]]
+test_charges = [[q1, x1, y1]]
 
 
-def draw_q(prob_q: list):
+def draw_q(charges: list):
     """
     Рисует заряды
-    :param prob_q: charges
+    :param charges: test_charges
     """
-    for i in range(len(prob_q)):
+    for i in range(len(charges)):
         index = 0
-        for j in prob_q[i]:
+        for j in charges[i]:
             index += 1
             if index > 1:
                 if index == 2:
@@ -50,10 +50,35 @@ def draw_q(prob_q: list):
         pygame.draw.circle(sc, white, (x, y), 10)
 
 
-def value_E(prob_q, x, y):
+def positive_charges(charges):
+    """
+    Удаляет отрицательные заряды
+    :param charges: test_charges
+    :return: positive_charges
+    """
+    return None
+
+
+def draw_start_coordinates(positive_ch):
+    """
+    Рисует начальные координаты вокруг заряда и возвращает их в виде списка
+    :param positive_ch: positive_charges
+    :return: charges_w_st_coord
+    """
+    return None
+
+
+def draw_lines(ch_w_st_coord):
+    """
+    Рисует линии напряженности
+    :param ch_w_st_coord: charges_w_st_coord
+    """
+    return None
+
+def value_E(charges, x, y):
     """
     Показывает направление напряженности в указанной точке
-    :param prob_q: список зарядов
+    :param charges: список зарядов
     :param x: начальная координата x
     :param y: начальная координата y
     :return: координаты конца вектора в виде списка
@@ -61,7 +86,7 @@ def value_E(prob_q, x, y):
     k = 9 * 10 ** 9
     Ex = 0
     Ey = 0
-    for i in prob_q:
+    for i in charges:
         if x / 100 == i[1] and y / 100 == i[2]:
             continue
         q = i[0] * 10 ** (-9)
@@ -74,10 +99,10 @@ def value_E(prob_q, x, y):
     return [Ex * 100, Ey * 100]
 
 
-def draw_vec(prob_q):
+def draw_vec(charges):
     """
     Рисует линии напряженности
-    :param prob_q: charges
+    :param charges: test_charges
     """
     kxv = width / 100
     kyv = height / 100
@@ -90,7 +115,7 @@ def draw_vec(prob_q):
 
     for i in xv:
         for j in yv:
-            pygame.draw.aaline(sc, white, [i, j], value_E(prob_q, i, j))
+            pygame.draw.aaline(sc, white, [i, j], value_E(charges, i, j))
 
 
 while True:
@@ -98,8 +123,8 @@ while True:
         if event.type == pygame.QUIT:
             exit()
 
-        draw_q(charges)
-        draw_vec(charges)
+        draw_q(test_charges)
+        draw_vec(test_charges)
 
         pygame.display.update()
 
