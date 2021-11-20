@@ -50,13 +50,17 @@ def draw_q(charges: list):
         pygame.draw.circle(sc, white, (x, y), 10)
 
 
-def positive_charges(charges):
+def positive_charges(charges: list):
     """
     Удаляет отрицательные заряды
     :param charges: test_charges
     :return: positive_charges
     """
-    return None
+    for i in charges:
+        if i[0] <= 0:
+            charges.remove(i)
+    positive_charges = charges
+    return positive_charges
 
 
 def draw_start_coordinates(positive_ch):
@@ -74,6 +78,7 @@ def draw_lines(ch_w_st_coord):
     :param ch_w_st_coord: charges_w_st_coord
     """
     return None
+
 
 def value_E(charges, x, y):
     """
