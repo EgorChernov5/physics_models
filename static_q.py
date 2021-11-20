@@ -52,27 +52,31 @@ def draw_q(prob_q: list):
 
 def value_E(prob_q, x, y):
     """
-    Вычисляет конечные координаты вектора E
+    Показывает направление напряженности в указанной точке
     :param prob_q: список зарядов
     :param x: начальная координата x
     :param y: начальная координата y
     :return: координаты конца вектора в виде списка
     """
+    k = 9 * 10 ** 9
+    Ex = 0
+    Ey = 0
     for i in prob_q:
         if x / 100 == i[1] and y / 100 == i[2]:
             continue
         q = i[0] * 10 ** (-9)
-        k = 9 * 10 ** 9
         r = (((i[1] - x / 100) ** 2 + (i[2] - y / 100) ** 2) ** (1 / 2))
         E = (k * q) / (r ** 2)
         dx = (x / 100) * E / r
         dy = (y / 100) * E / r
-        return [dx * 100, dy * 100]
+        Ex += dx
+        Ey += dy
+    return [Ex * 100, Ey * 100]
 
 
 def draw_vec(prob_q):
     """
-    Рисует векторы напряженности
+    Рисует линии напряженности
     :param prob_q: charges
     """
     kxv = width / 100
@@ -84,8 +88,9 @@ def draw_vec(prob_q):
     for i in range(1, int(kyv)):
         yv.append(i * 100)
 
-
-    return None
+    for i in xv:
+        for j in yv:
+            pygame.draw.aaline(sc, white, [i, j], value_E(prob_q, i, j))
 
 
 while True:
@@ -94,6 +99,7 @@ while True:
             exit()
 
         draw_q(charges)
+        draw_vec(charges)
 
         pygame.display.update()
 

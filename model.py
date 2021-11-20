@@ -7,7 +7,7 @@ from math import sin , cos, pi
 from tqdm import tqdm
 import numba as nb
 from numba import jit
-
+import tkinter
 
 m = 9.1 * 10 ** (-11)
 q = 1.6 * 10 ** (-10)
