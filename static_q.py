@@ -31,7 +31,7 @@ x1 = 3
 y1 = 3
 
 # характеристики передаваемых зарядов
-test_charges = [[q1, x1, y1], [1, 5, 5]]
+test_charges = [[q1, x1, y1]]
 radius = 10
 
 
@@ -87,14 +87,6 @@ def draw_start_coordinates(positive_ch):
     return charges_w_st_coord
 
 
-def draw_lines(ch_w_st_coord):
-    """
-    Рисует линии напряженности
-    :param ch_w_st_coord: charges_w_st_coord
-    """
-    return None
-
-
 def value_E(charges, x, y):
     """
     Показывает направление напряженности в указанной точке
@@ -119,24 +111,44 @@ def value_E(charges, x, y):
     return [Ex * 100, Ey * 100]
 
 
-def draw_vec(charges):
+def draw_lines(ch_w_st_coord):
     """
     Рисует линии напряженности
-    :param charges: test_charges
+    :param ch_w_st_coord: charges_w_st_coord
     """
-    kxv = width / 100
-    kyv = height / 100
-    xv = []
-    yv = []
+    dl = 5
+    for i in ch_w_st_coord:
+        for j in i:
+            if j == i[0]:
+                continue
+            x1, y1 = j
+            x2, y2 = value_E(test_charges, x1, y1)
+            r = numpy.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+            a = numpy.arccos((x2 - x1)/r)
+            dx = dl * numpy.cos(a)
+            dy = dl * numpy.sin(a)
+            pygame.draw.aaline(sc, white, [x1, y1], [dx, dy])
+    return None
 
-    for i in range(1, int(kxv)):
-        xv.append(i * 100)
-    for i in range(1, int(kyv)):
-        yv.append(i * 100)
 
-    for i in xv:
-        for j in yv:
-            pygame.draw.aaline(sc, white, [i, j], value_E(charges, i, j))
+# def draw_vec(charges):
+#     """
+#     Рисует линии напряженности
+#     :param charges: test_charges
+#     """
+#     kxv = width / 100
+#     kyv = height / 100
+#     xv = []
+#     yv = []
+#
+#     for i in range(1, int(kxv)):
+#         xv.append(i * 100)
+#     for i in range(1, int(kyv)):
+#         yv.append(i * 100)
+#
+#     for i in xv:
+#         for j in yv:
+#             pygame.draw.aaline(sc, white, [i, j], value_E(charges, i, j))
 
 
 while True:
