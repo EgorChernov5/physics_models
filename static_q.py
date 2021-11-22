@@ -116,18 +116,21 @@ def draw_lines(ch_w_st_coord):
     Рисует линии напряженности
     :param ch_w_st_coord: charges_w_st_coord
     """
-    dl = 5
+    dl = 50
     for i in ch_w_st_coord:
         for j in i:
             if j == i[0]:
                 continue
             x1, y1 = j
-            x2, y2 = value_E(test_charges, x1, y1)
-            r = numpy.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-            a = numpy.arccos((x2 - x1)/r)
-            dx = dl * numpy.cos(a)
-            dy = dl * numpy.sin(a)
-            pygame.draw.aaline(sc, white, [x1, y1], [dx, dy])
+            while 0 <= x1 <= width or 0 <= y1 <= height:
+                x2, y2 = value_E(test_charges, x1, y1)
+                r = numpy.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+                a = numpy.arccos((x2 - x1)/r)
+                dx = x1 + dl * numpy.cos(a)
+                dy = y1 + dl * numpy.sin(a)
+                pygame.draw.aaline(sc, white, [x1, y1], [dx, dy])
+                x1 += dx
+                y1 += dy
     return None
 
 
@@ -157,7 +160,7 @@ while True:
             exit()
 
         draw_charges(test_charges)
-        draw_start_coordinates(positive_charges(test_charges))
+        draw_lines(draw_start_coordinates(positive_charges(test_charges)))
 
         pygame.display.update()
 
