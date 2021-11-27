@@ -1,120 +1,56 @@
-import pygame
-import numpy
-
-pygame.init()
-
-width, height = 1200, 800
-white = (255, 255, 255)
-
-sc = pygame.display.set_mode((width, height), pygame.RESIZABLE)
-pygame.display.set_caption("Заряд с линиями напряженности")
-
-clock = pygame.time.Clock()
-FPS = 30
-
-osxn = 0
-osxk = width
-osyn = 0
-osyk = height
-
-# pygame.draw.line(sc, white, (osxn, osyk), (osxk, osyk))
-# pygame.draw.line(sc, white, (osxn, osyn), (osxn, osyk))
-
-'''
-Params:
-q1 - величина заряда [нКл = 10^(-9) Кл]
-x1 - координата x [см = 10^(-2)]
-y1 - координата y [см = 10^(-2)]
-'''
-q1 = 1
-x1 = 3
-y1 = 3
-
-# характеристики передаваемых зарядов
-test_charges = [[q1, x1, y1]]
-radius = 10
+# import sys
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Circle
 
 
-def draw_charges(charges: list):
-    """
-    Рисует заряды
-    :param charges: test_charges
-    """
-    for i in range(len(charges)):
-        index = 0
-        for j in charges[i]:
-            index += 1
-            if index > 1:
-                if index == 2:
-                    x = j * 100
-                else:
-                    y = j * 100
-        pygame.draw.circle(sc, white, (x, y), radius)
+def E(q, r0, x, y):
+    """Return the electric field vector E=(Ex,Ey) due to charge q at r0."""
+    den = np.hypot(x-r0[0], y-r0[1])**3
+    return q * (x - r0[0]) / den, q * (y - r0[1]) / den
 
 
-def value_E(charges, x, y):
-    """
-    Показывает направление напряженности в указанной точке
-    :param charges: список зарядов
-    :param x: начальная координата x
-    :param y: начальная координата y
-    :return: координаты конца вектора
-    """
-    dl = 10
-    k = 9 * 10 ** 9
-    Ex = []
-    Ey = []
-    for i in charges:
-        if x / 100 == i[1] and y / 100 == i[2]:
-            continue
-        q = i[0] * 10 ** (-9)
-        r = numpy.sqrt((i[1] - x / 100) ** 2 + (i[2] - y / 100) ** 2)
-        E = (k * q) / (r ** 2)
-        dx = (x * E) / r
-        dy = (y * E) / r
-        Ex.append(dx)
-        Ey.append(dy)
-    xv = sum(Ex) + x
-    yv = sum(Ey) + y
-    r = numpy.sqrt((xv - x) ** 2 + (yv - y) ** 2)
-    if xv >= x:
-        a = numpy.arccos((xv - x) / r)
-    else:
-        a = numpy.arccos((x - xv) / r)
-    dx = x + dl * numpy.cos(a)
-    dy = y + dl * numpy.sin(a)
-    return [dx, dy]
+# Grid of x, y points
+# Матрица x, y
+nx, ny = 64, 64
+x = np.linspace(-2, 2, nx)
+y = np.linspace(-2, 2, ny)
+X, Y = np.meshgrid(x, y)
 
+# Create a multipole with nq charges of alternating sign, equally spaced
+# on the unit circle.
+# Создание мультиполя с nq зарядами переменного электрического тока, расположенных на
+# одинаковых расстояниях.
+# nq = 2**int(sys.argv[1])
+nq = 4
+charges = []
+for i in range(nq):
+    q = i % 2 * 2 - 1
+    charges.append((q, (np.cos(2 * np.pi * i / nq), np.sin(2 * np.pi * i / nq))))
 
-def draw_vec(charges):
-    """
-    Рисует линии напряженности
-    :param charges: test_charges
-    """
-    kxv = width / 100
-    kyv = height / 100
-    xv = []
-    yv = []
+# Electric field vector, E=(Ex, Ey), as separate components
+Ex, Ey = np.zeros((ny, nx)), np.zeros((ny, nx))
+for charge in charges:
+    ex, ey = E(*charge, x=X, y=Y)
+    Ex += ex
+    Ey += ey
 
-    for i in range(1, int(kxv)):
-        xv.append(i * 100)
-    for i in range(1, int(kyv)):
-        yv.append(i * 100)
+fig = plt.figure()
+ax = fig.add_subplot(111)
 
-    for i in xv:
-        for j in yv:
-            pygame.draw.aaline(sc, white, [i, j], value_E(charges, i, j))
-            pygame.draw.circle(sc, white, value_E(charges, i, j), 2)
+# Plot the streamlines with an appropriate colormap and arrow style
+color = 2 * np.log(np.hypot(Ex, Ey))
+ax.streamplot(x, y, Ex, Ey, color=color, linewidth=1, cmap=plt.cm.inferno,
+              density=2, arrowstyle='->', arrowsize=1.5)
 
+# Add filled circles for the charges themselves
+charge_colors = {True: '#aa0000', False: '#0000aa'}
+for q, pos in charges:
+    ax.add_artist(Circle(pos, 0.05, color=charge_colors[q > 0]))
 
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            exit()
-
-        draw_charges(test_charges)
-        draw_vec(test_charges)
-
-        pygame.display.update()
-
-    clock.tick(FPS)
+ax.set_xlabel('$x$')
+ax.set_ylabel('$y$')
+ax.set_xlim(-2, 2)
+ax.set_ylim(-2, 2)
+ax.set_aspect('equal')
+plt.show()
