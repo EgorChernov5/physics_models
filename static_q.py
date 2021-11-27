@@ -77,7 +77,10 @@ def value_E(charges, x, y):
     xv = sum(Ex) + x
     yv = sum(Ey) + y
     r = numpy.sqrt((xv - x) ** 2 + (yv - y) ** 2)
-    a = numpy.arccos((xv - x) / r)
+    if xv >= x:
+        a = numpy.arccos((xv - x) / r)
+    else:
+        a = numpy.arccos((x - xv) / r)
     dx = x + dl * numpy.cos(a)
     dy = y + dl * numpy.sin(a)
     return [dx, dy]
@@ -101,6 +104,7 @@ def draw_vec(charges):
     for i in xv:
         for j in yv:
             pygame.draw.aaline(sc, white, [i, j], value_E(charges, i, j))
+            pygame.draw.circle(sc, white, value_E(charges, i, j), 2)
 
 
 while True:
