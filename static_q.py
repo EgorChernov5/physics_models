@@ -29,7 +29,7 @@ def init():
     charges = []
     for i in range(nq):
         q = i % 2 * 2 - 1
-        charges.append((q, (np.cos(2 * np.pi * i / nq), np.sin(2 * np.pi * i / nq))))
+        charges.append([q, [np.cos(2 * np.pi * i / nq), np.sin(2 * np.pi * i / nq)]])
     return charges
 
 
@@ -85,15 +85,9 @@ def animate(i):
     draw_charges(new_charges)
 
 
-sin_animation = animation.FuncAnimation(fig,
-                                        animate,
-                                        frames=np.linspace(2, 4, 5),
-                                        interval=10,
-                                        repeat=False)
+sin_animation = animation.FuncAnimation(fig, animate, frames=10, interval=5, repeat=False)
 
-sin_animation.save('anim1.gif',
-                   writer='imagemagick',
-                   fps=5)
+sin_animation.save('anim1.gif', writer='imagemagick', fps=5)
 
 # ax.set_xlabel('$x$')
 # ax.set_ylabel('$y$')
