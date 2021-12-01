@@ -29,7 +29,13 @@ def init():
     charges = []
     for i in range(nq):
         q = i % 2 * 2 - 1
-        charges.append([q, [np.cos(2 * np.pi * i / nq), np.sin(2 * np.pi * i / nq)]])
+        x = np.cos(2 * np.pi * i / nq)
+        if x == np.cos(np.pi / 2) or x == np.cos(-np.pi / 2) or x == np.cos(-np.pi / 2 * 3):
+            x = 0
+        y = np.sin(2 * np.pi * i / nq)
+        if y == np.sin(np.pi) or y == np.sin(0):
+            y = 0
+        charges.append([q, [x, y]])
     return charges
 
 
@@ -37,7 +43,7 @@ def update_charges(charges):
     # [[xq1, yq1, q1, mq1, vxq1, vyq1, z]]
     up_charges = []
     for charge in charges:
-        q = charge[0]
+        q = charge[0] * 10**(-9)
         xq, yq = charge[1]
         mq = 9.1 * 10**(-11)
         vxq = 0
@@ -47,6 +53,7 @@ def update_charges(charges):
         else:
             z = 0
         up_charges.append([xq, yq, q, mq, vxq, vyq, z])
+    up_charges = np.array(up_charges)
     return up_charges
 
 
@@ -54,7 +61,7 @@ def initial_charges(up_charges):
     init_charges = []
     for up_charge in up_charges:
         r0 = []
-        q = up_charge[2]
+        q = up_charge[2] * 10**9
         r0.extend([up_charge[0], up_charge[1]])
         init_charges.append([q, r0])
     return init_charges
@@ -64,21 +71,20 @@ def move_charges(up_charges):
     dt = 1
     new_up_charges = np.copy(up_charges)
     for c in range(len(up_charges)):  # проход по зарядам и обновление их координат и проекций скоростей
-        if up_charges[c][6] == 1:
-            xs = up_charges[c][0]
-            ys = up_charges[c][1]
-            q = up_charges[c][2]
-            m = up_charges[c][3]
-            vx = up_charges[c][4]
-            vy = up_charges[c][5]
-            Ex, Ey = E_values(up_charges, xs, ys, c)
-            # получается огромный Ex, Ey
-            x = (((Ex * q) / m) * dt ** 2) / 2 + vx * dt + xs
-            y = (((Ey * q) / m) * dt ** 2) / 2 + vy * dt + ys
-            vx += ((Ex * q) / m) * dt
-            vy += ((Ey * q) / m) * dt
-            # print(update_charges[c]-[x,y,q,m,vx,vy])
-            new_up_charges[c] = [x, y, q, m, vx, vy, 1]
+        xs = up_charges[c][0]
+        ys = up_charges[c][1]
+        q = up_charges[c][2]
+        m = up_charges[c][3]
+        vx = up_charges[c][4]
+        vy = up_charges[c][5]
+        Ex, Ey = E_values(up_charges, xs, ys, c)
+        # получается огромный Ex, Ey
+        x = (((Ex * q) / m) * dt ** 2) / 2 + vx * dt + xs
+        y = (((Ey * q) / m) * dt ** 2) / 2 + vy * dt + ys
+        vx += ((Ex * q) / m) * dt
+        vy += ((Ey * q) / m) * dt
+        # print(update_charges[c]-[x,y,q,m,vx,vy])
+        new_up_charges[c] = [x, y, q, m, vx, vy, 1]
 
     return new_up_charges  # возвращение обновлённого массива характеристик зарядов
 
@@ -95,35 +101,33 @@ def vec_el(new_charges):
 
 
 def E_values(up_charges, xs, ys, nq):
-    l = 1
+    dl = 0.001
     k = 9 * 10 ** 9
-    Ex = 0
-    Ey = 0
-    c = 0
-    if nq == None:
-        for c in range(len(up_charges)):
-            q = up_charges[c]
-            r = ((xs - q[0]) ** 2 + (ys - q[1]) ** 2) ** 0.5
-            dEv = (k * q[2]) / r ** 2
-            dEx = (xs - q[0]) * (dEv / r) * l
-            dEy = (ys - q[1]) * (dEv / r) * l
+    Ex = []
+    Ey = []
+    for c in range(len(up_charges)):
+        if c != nq:
+            x = up_charges[c][0]
+            y = up_charges[c][1]
+            q = up_charges[c][2]
 
-            Ex += dEx
-            Ey += dEy
-        return Ex, Ey
-    else:
-        for c in range(len(up_charges)):
-            if c != nq:
-                q = up_charges[c]
-
-                r = ((xs - q[0]) ** 2 + (ys - q[1]) ** 2) ** 0.5
-                dEv = (k * q[2]) / r ** 2
-                dEx = (xs - q[0]) * (dEv / r) * l
-                dEy = (ys - q[1]) * (dEv / r) * l
-
-                Ex += dEx
-                Ey += dEy
-        return Ex, Ey
+            r = ((xs / 100 - x / 100) ** 2 + (ys / 100 - y / 100) ** 2) ** 0.5
+            dEv = (k * q) / r ** 2
+            dx = (x * dEv) / r
+            dy = (y * dEv) / r
+            Ex.append(dx)
+            Ey.append(dy)
+    xv = sum(Ex) + x
+    yv = sum(Ey) + y
+    # r = np.sqrt((xv - x) ** 2 + (yv - y) ** 2)
+    # if xv >= x:
+    #     a = np.arccos((xv - x) / r)
+    # else:
+    #     a = np.arccos((x - xv) / r)
+    # dx = x + dl * np.cos(a)
+    # dy = y + dl * np.sin(a)
+    # return [dx, dy]
+    return [xv, yv]
 
 
 fig = plt.figure()
