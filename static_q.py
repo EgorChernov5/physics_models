@@ -13,9 +13,9 @@ def E(q, r0, x, y):
 
 # Grid of x, y points
 # Матрица x, y
-nx, ny = 64, 64
-x = np.linspace(-2, 2, nx)
-y = np.linspace(-2, 2, ny)
+nx, ny = 64 * 25, 64 * 25
+x = np.linspace(-50, 50, nx)
+y = np.linspace(-50, 50, ny)
 X, Y = np.meshgrid(x, y)
 
 
@@ -25,18 +25,21 @@ def init():
     # Создание мультиполя с nq зарядами переменного электрического тока, расположенных на
     # одинаковых расстояниях.
     # nq = 2**int(sys.argv[1])
-    nq = 4
-    charges = []
-    for i in range(nq):
-        q = i % 2 * 2 - 1
-        x = np.cos(2 * np.pi * i / nq)
-        if x == np.cos(np.pi / 2) or x == np.cos(-np.pi / 2) or x == np.cos(-np.pi / 2 * 3):
-            x = 0
-        y = np.sin(2 * np.pi * i / nq)
-        if y == np.sin(np.pi) or y == np.sin(0):
-            y = 0
-        charges.append([q, [x, y]])
-    return charges
+    # nq = 3
+    # charges = []
+    # for i in range(nq):
+    #     q = i % 2 * 2 - 1
+    #     x = np.cos(2 * np.pi * i / nq)
+    #     if x == np.cos(np.pi / 2) or x == np.cos(-np.pi / 2) or x == np.cos(-np.pi / 2 * 3):
+    #         x = 0
+    #     y = np.sin(2 * np.pi * i / nq)
+    #     if y == np.sin(np.pi) or y == np.sin(0):
+    #         y = 0
+    #     charges.append([q, [x, y]])
+    # return charges  # [[1, [1.0, 0]], [-1, [0.0, 1.0]], [1, [0.0, -1.0]]]
+
+    return [[-1, [0.0, 3.0]], [-1, [0.0, 0.0]]]
+
 
 
 def update_charges(charges):
@@ -48,7 +51,7 @@ def update_charges(charges):
         mq = 9.1 * 10**(-11)
         vxq = 0
         vyq = 0
-        if q == 1:
+        if q == 10**(-9):
             z = 1
         else:
             z = 0
@@ -68,24 +71,19 @@ def initial_charges(up_charges):
 
 
 def move_charges(up_charges):
-    dt = 1
     new_up_charges = np.copy(up_charges)
-    for c in range(len(up_charges)):  # проход по зарядам и обновление их координат и проекций скоростей
+    for c in range(len(up_charges)):  # проход по зарядам и обновление их координат
         xs = up_charges[c][0]
         ys = up_charges[c][1]
         q = up_charges[c][2]
         m = up_charges[c][3]
         vx = up_charges[c][4]
         vy = up_charges[c][5]
+        z = up_charges[c][6]
         Ex, Ey = E_values(up_charges, xs, ys, c)
-        # получается огромный Ex, Ey
-        x = (((Ex * q) / m) * dt ** 2) / 2 + vx * dt + xs
-        y = (((Ey * q) / m) * dt ** 2) / 2 + vy * dt + ys
-        vx += ((Ex * q) / m) * dt
-        vy += ((Ey * q) / m) * dt
-        # print(update_charges[c]-[x,y,q,m,vx,vy])
-        new_up_charges[c] = [x, y, q, m, vx, vy, 1]
-
+        x = Ex
+        y = Ey
+        new_up_charges[c] = [x, y, q, m, vx, vy, z]
     return new_up_charges  # возвращение обновлённого массива характеристик зарядов
 
 
@@ -101,33 +99,25 @@ def vec_el(new_charges):
 
 
 def E_values(up_charges, xs, ys, nq):
-    dl = 0.001
     k = 9 * 10 ** 9
-    Ex = []
-    Ey = []
+    i = 0
     for c in range(len(up_charges)):
         if c != nq:
             x = up_charges[c][0]
             y = up_charges[c][1]
             q = up_charges[c][2]
-
-            r = ((xs / 100 - x / 100) ** 2 + (ys / 100 - y / 100) ** 2) ** 0.5
-            dEv = (k * q) / r ** 2
-            dx = (x * dEv) / r
-            dy = (y * dEv) / r
-            Ex.append(dx)
-            Ey.append(dy)
-    xv = sum(Ex) + x
-    yv = sum(Ey) + y
-    # r = np.sqrt((xv - x) ** 2 + (yv - y) ** 2)
-    # if xv >= x:
-    #     a = np.arccos((xv - x) / r)
-    # else:
-    #     a = np.arccos((x - xv) / r)
-    # dx = x + dl * np.cos(a)
-    # dy = y + dl * np.sin(a)
-    # return [dx, dy]
-    return [xv, yv]
+            r = ((xs - x) ** 2 + (ys - y) ** 2) ** 0.5
+            module_E = (k * q) / r ** 2
+            dx = (module_E * (x - xs) + r * xs) / r
+            dy = (module_E * (y - ys) + r * ys) / r
+            i += 1
+            if i == 1:  # обрабатывается первый заряд
+                result_Ex = dx
+                result_Ey = dy
+            else:  # сложение результирующих векторов
+                result_Ex += result_Ex + dx - xs
+                result_Ey += result_Ey + dy - ys
+    return [result_Ex, result_Ey]
 
 
 fig = plt.figure()
@@ -147,29 +137,42 @@ def draw_charges(new_charges):
     # Добавление закрашенных кружков для самих зарядов
     charge_colors = {True: '#aa0000', False: '#0000aa'}
     for q, pos in new_charges:
-        ax.add_artist(Circle(pos, 0.05, color=charge_colors[q > 0]))
+        ax.add_artist(Circle(pos, 1, color=charge_colors[q > 0]))
 
 
-def animate():
+data_charges = []
+
+
+def manager_charges(i):
+    if data_charges:
+        up_charges = update_charges(data_charges[i])
+        new_up_charges = move_charges(up_charges)
+        new_charges = initial_charges(new_up_charges)
+        Ex, Ey = vec_el(new_charges)
+        draw_line(Ex, Ey)
+        draw_charges(new_charges)
+        data_charges.append(new_charges)
+    else:
+        data_charges.append(init())
+        Ex, Ey = vec_el(data_charges[0])
+        draw_line(Ex, Ey)
+        draw_charges(data_charges[0])
+        data_charges.append(data_charges[0])
+
+
+def animate(i):
+    print(i)
     ax.clear()
-    charges = init()
-    up_charges = update_charges(charges)
-    new_up_charges = move_charges(up_charges)
-    new_charges = initial_charges(new_up_charges)
-    Ex, Ey = vec_el(new_charges)
-    draw_line(Ex, Ey)
-    draw_charges(new_charges)
+    manager_charges(i)
 
 
-animate()
+sin_animation = animation.FuncAnimation(fig, animate, frames=5, interval=1, repeat=False)
 
-# sin_animation = animation.FuncAnimation(fig, animate, frames=10, interval=5, repeat=False)
+sin_animation.save('anim1.gif', writer='imagemagick', fps=1)
 
-# sin_animation.save('anim1.gif', writer='imagemagick', fps=5)
-
-ax.set_xlabel('$x$')
-ax.set_ylabel('$y$')
-ax.set_xlim(-2, 2)
-ax.set_ylim(-2, 2)
-ax.set_aspect('equal')
-plt.show()
+# ax.set_xlabel('$x$')
+# ax.set_ylabel('$y$')
+# ax.set_xlim(-50, 50)
+# ax.set_ylim(-50, 50)
+# ax.set_aspect('equal')
+# plt.show()
