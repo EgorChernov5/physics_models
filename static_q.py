@@ -38,7 +38,7 @@ def init():
     #     charges.append([q, [x, y]])
     # return charges  # [[1, [1.0, 0]], [-1, [0.0, 1.0]], [1, [0.0, -1.0]]]
 
-    return [[-1, [0.0, 3.0]], [-1, [0.0, 0.0]]]
+    return [[1, [-5.0, 0.0]], [1, [5.0, 0.0]], [1, [0.0, 5.0]], [1, [0.0, -5.0]]]
 
 
 
@@ -71,6 +71,7 @@ def initial_charges(up_charges):
 
 
 def move_charges(up_charges):
+    dt = 0.2
     new_up_charges = np.copy(up_charges)
     for c in range(len(up_charges)):  # проход по зарядам и обновление их координат
         xs = up_charges[c][0]
@@ -81,8 +82,12 @@ def move_charges(up_charges):
         vy = up_charges[c][5]
         z = up_charges[c][6]
         Ex, Ey = E_values(up_charges, xs, ys, c)
-        x = Ex
-        y = Ey
+        # x = Ex
+        # y = Ey
+        x = (((Ex * q) / m) * dt ** 2) / 2 + vx * dt + xs
+        y = (((Ey * q) / m) * dt ** 2) / 2 + vy * dt + ys
+        vx += ((Ex * q) / m) * dt
+        vy += ((Ey * q) / m) * dt
         new_up_charges[c] = [x, y, q, m, vx, vy, z]
     return new_up_charges  # возвращение обновлённого массива характеристик зарядов
 
@@ -99,17 +104,36 @@ def vec_el(new_charges):
 
 
 def E_values(up_charges, xs, ys, nq):
-    k = 9 * 10 ** 9
+    k = 9 * 10**9
     i = 0
+    q_looking_charge = up_charges[nq][2]
     for c in range(len(up_charges)):
         if c != nq:
             x = up_charges[c][0]
             y = up_charges[c][1]
             q = up_charges[c][2]
-            r = ((xs - x) ** 2 + (ys - y) ** 2) ** 0.5
+            r = ((xs - x)**2 + (ys - y)**2)**0.5
+
+            if q < 0:
+                q = q * (-1)
             module_E = (k * q) / r ** 2
-            dx = (module_E * (x - xs) + r * xs) / r
-            dy = (module_E * (y - ys) + r * ys) / r
+
+            if q_looking_charge < 0:
+                dx = (module_E * (x - xs) + r * xs) / r
+                dy = (module_E * (y - ys) + r * ys) / r
+
+                dr = ((xs - dx)**2 + (ys - dy)**2)**0.5
+                a = (dx - xs) / dr
+                b = (dy - ys) / dr
+
+                dx = dr * a - xs
+                dy = dr * b - ys
+            else:
+                dx = (module_E * (x - xs) + r * xs) / r
+                dy = (module_E * (y - ys) + r * ys) / r
+
+            # dx = (module_E * (x - xs) + r * xs) / r
+            # dy = (module_E * (y - ys) + r * ys) / r
             i += 1
             if i == 1:  # обрабатывается первый заряд
                 result_Ex = dx
@@ -168,7 +192,7 @@ def animate(i):
 
 sin_animation = animation.FuncAnimation(fig, animate, frames=5, interval=1, repeat=False)
 
-sin_animation.save('anim1.gif', writer='imagemagick', fps=1)
+sin_animation.save('anim2.gif', writer='imagemagick', fps=1)
 
 # ax.set_xlabel('$x$')
 # ax.set_ylabel('$y$')
